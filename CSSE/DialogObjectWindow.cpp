@@ -1,5 +1,5 @@
 #include "DialogObjectWindow.h"
-
+#include <windows.h>
 #include "LogUtil.h"
 #include "MemoryUtil.h"
 #include "MetadataUtil.h"
@@ -174,7 +174,33 @@ namespace se::cs::dialog::object_window {
 			return string::cicontains(haystack, currentSearchText);
 		}
 	}
+	bool complexSearch(int value, std::string operation, std::string valueCompare) {
+		if (operation == "==")  return  (value == std::stoi(valueCompare));
+		else if (operation == "!=")  return  (value != std::stoi(valueCompare));
+		else if (operation == "<")  return  (value < std::stoi(valueCompare));
+		else if (operation == ">")  return  (value > std::stoi(valueCompare));
+		else if (operation == "<=")  return  (value <= std::stoi(valueCompare));
+		else if (operation == ">=")  return  (value >= std::stoi(valueCompare));
+	}
 
+	bool complexSearch(std::string value, std::string operation, std::string valueCompare) {
+		se::string::to_lower(value);
+		if (operation == "==")  return  (value == valueCompare);
+		else if (operation == "!=")  return  (value != valueCompare);
+		else if (operation == "startswith")  return  value._Starts_with(valueCompare);
+	}
+
+	std::string trim(const std::string& str)
+	{
+		size_t first = str.find_first_not_of(' ');
+		if (std::string::npos == first)
+		{
+			return str;
+		}
+		size_t last = str.find_last_not_of(' ');
+		return str.substr(first, (last - first + 1));
+	
+	}
 	// TODO: Make use of the new object-class search features.
 	bool PatchFilterObjectWindow_ObjectMatchesSearchText(const Object* object) {
 		// Hide deprecated objects.
@@ -191,12 +217,56 @@ namespace se::cs::dialog::object_window {
 			return true;
 		}
 
+		// If the current search starts with -.- then do special search
+		if (currentSearchText._Starts_with("-.-")) {
+
+			// Remove the first 3 characters (-.-) from the string and turn it into a strea,
+			std::stringstream streamSearch(currentSearchText.substr(3));
+			std::string segment;
+			// Default object found flag to be true
+			bool objFound = true;
+			// Turn the search text into a list of strings split at ")" 
+			// This will cause a string such as value == 50 & id = 6 into [value == 50, id == 6]
+			while (std::getline(streamSearch, segment, '&')) {
+				segment = trim(segment);
+				int spacePos = segment.find(" ");
+				// First word will be the column to operate on
+				std::string column = segment.substr(0, spacePos);
+				// Second "word" will be the operator 
+				int secondSpacePos = segment.find(" ", spacePos + 1);
+				std::string operation = segment.substr(spacePos + 1, secondSpacePos - spacePos - 1);
+				// Third "word" is the value to compare
+				//Second "word" will be the operator 
+				int thirdSpacePos = segment.find(" ", secondSpacePos + 1);
+				std::string valueCompare = segment.substr(secondSpacePos + 1, thirdSpacePos - secondSpacePos);
+				valueCompare = trim(valueCompare);
+				if (column._Starts_with("value")) {
+					objFound = objFound && complexSearch(object->getValue(), operation, (valueCompare));
+				}
+				else if (column._Starts_with("count")) {
+					objFound = objFound && complexSearch(object->getCount(), operation, (valueCompare));
+				}
+				else if (column._Starts_with("id")) {
+					objFound = objFound && complexSearch(object->getObjectID(), operation, valueCompare);
+				}
+				else if (column._Starts_with("name")) {
+					objFound = objFound && complexSearch(object->getName(), operation, valueCompare);
+				}
+				
+			}
+
+			return objFound;
+		}
+		
 		// Allow filtering by object ID.
 		if (settings.object_window.filter_by_id) {
 			if (matchDispatcher(object->getObjectID())) {
 				return true;
 			}
 		}
+
+		// Allow filtering by object ID.
+		
 
 		// Allow filtering by object name.
 		if (settings.object_window.filter_by_name) {
@@ -343,7 +413,7 @@ namespace se::cs::dialog::object_window {
 		if (objectWindowSearchControl == NULL) {
 
 			auto hDlgShowModifiedOnly = CreateWindowExA(NULL, WC_BUTTON, "Show modified only", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_CHILD | WS_VISIBLE | WS_GROUP, 0, 0, 0, 0, hWnd, (HMENU)CONTROL_ID_SHOW_MODIFIED_ONLY_BUTTON, hInstance, NULL);
-			auto hDlgFilterStatic = CreateWindowExA(NULL, WC_STATIC, "Filter:", SS_RIGHT | WS_CHILD | WS_VISIBLE | WS_GROUP, 0, 0, 0, 0, hWnd, (HMENU)CONTROL_ID_FILTER_LABEL, hInstance, NULL);
+			auto hDlgFilterStatic = CreateWindowExA(NULL, WC_STATIC, "Filr:", SS_RIGHT | WS_CHILD | WS_VISIBLE | WS_GROUP, 0, 0, 0, 0, hWnd, (HMENU)CONTROL_ID_FILTER_LABEL, hInstance, NULL);
 			hDlgFilterEdit = CreateWindowExA(WS_EX_CLIENTEDGE, WC_EDIT, "", ES_LEFT | ES_AUTOHSCROLL | WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP, 0, 0, 0, 0, hWnd, (HMENU)CONTROL_ID_FILTER_EDIT, hInstance, NULL);
 			if (hDlgFilterEdit) {
 				SetWindowSubclass(hDlgFilterEdit, ui_subclass::edit::BasicExtendedProc, NULL, NULL);
