@@ -109,7 +109,7 @@ namespace se::cs::dialog::object_window {
 
 		bool settingsChanged = false;
 
-		char buffer[64] = {};
+		char buffer[64] = {}; 
 
 		LV_COLUMN lvColumnData = {};
 		lvColumnData.pszText = buffer;
@@ -160,8 +160,10 @@ namespace se::cs::dialog::object_window {
 	//
 
 	static std::string currentSearchText;
+	static std::string currentQueryText;
 	static std::optional<std::regex> currentSearchRegex;
 	static bool modeShowModifiedOnly = false;
+	static bool modeQuerySearch = false;
 
 	bool matchDispatcher(const std::string_view& haystack) {
 		if (currentSearchRegex) {
@@ -174,6 +176,7 @@ namespace se::cs::dialog::object_window {
 			return string::cicontains(haystack, currentSearchText);
 		}
 	}
+
 	bool complexSearch(int value, std::string operation, std::string valueCompare) {
 		if (operation == "==")  return  (value == std::stoi(valueCompare));
 		else if (operation == "!=")  return  (value != std::stoi(valueCompare));
@@ -188,19 +191,67 @@ namespace se::cs::dialog::object_window {
 		if (operation == "==")  return  (value == valueCompare);
 		else if (operation == "!=")  return  (value != valueCompare);
 		else if (operation == "startswith")  return  value._Starts_with(valueCompare);
+		else if (operation == "contains") return value.find(valueCompare) != std::string::npos;
 	}
 
-	std::string trim(const std::string& str)
-	{
+	std::string trim(const std::string& str) {
 		size_t first = str.find_first_not_of(' ');
-		if (std::string::npos == first)
-		{
+		if (std::string::npos == first) {
 			return str;
 		}
 		size_t last = str.find_last_not_of(' ');
 		return str.substr(first, (last - first + 1));
-	
 	}
+
+	bool querySearch(const Object* object, std::string query) {
+		std::stringstream streamSearch(query);
+		std::string segment;
+		// Default object found flag to be true
+		bool objFound = true;
+		// Turn the search text into a list of strings split at ")" 
+		// This will cause a string such as value == 50 & id = 6 into [value == 50, id == 6]
+		while (std::getline(streamSearch, segment, '&')) {
+			segment = trim(segment);
+			int spacePos = segment.find(" ");
+			// First word will be the column to operate on
+			std::string column = segment.substr(0, spacePos);
+			// Second "word" will be the operator 
+			int secondSpacePos = segment.find(" ", spacePos + 1);
+			std::string operation = segment.substr(spacePos + 1, secondSpacePos - spacePos - 1);
+			// Third "word" is the value to compare
+			//Second "word" will be the operator 
+			int thirdSpacePos = segment.find(" ", secondSpacePos + 1);
+			std::string valueCompare = segment.substr(secondSpacePos + 1, thirdSpacePos - secondSpacePos);
+			valueCompare = trim(valueCompare);
+			if (column._Starts_with("value")) {
+				objFound = objFound && complexSearch(object->getValue(), operation, (valueCompare));
+			}
+			else if (column._Starts_with("count")) {
+				objFound = objFound && complexSearch(object->getCount(), operation, (valueCompare));
+			}
+			else if (column._Starts_with("id")) {
+				objFound = objFound && complexSearch(object->getObjectID(), operation, valueCompare);
+			}
+			else if (column._Starts_with("name")) {
+				objFound = objFound && complexSearch(object->getName(), operation, valueCompare);
+			}
+			else if (column._Starts_with("type")) {
+				objFound = objFound && complexSearch(object->getTypeName(), operation, valueCompare);
+			}
+			else if (column._Starts_with("script")) {
+				objFound = objFound && complexSearch(object->getScript()->getObjectID(), operation, valueCompare);
+			}
+			else if (column._Starts_with("weight")) {
+				objFound = objFound && complexSearch(object->getWeight(), operation, valueCompare);
+			}
+			else if (column._Starts_with("enchanting")) {
+				objFound = objFound && complexSearch(object->getEnchantment()->getObjectID(), operation, valueCompare);
+			}
+		}
+
+		return objFound;
+	}
+
 	// TODO: Make use of the new object-class search features.
 	bool PatchFilterObjectWindow_ObjectMatchesSearchText(const Object* object) {
 		// Hide deprecated objects.
@@ -211,62 +262,23 @@ namespace se::cs::dialog::object_window {
 		if (modeShowModifiedOnly && !object->getModified()) {
 			return false;
 		}
+		
+		// If we're in query search mode, then do a special search
+		if (modeQuerySearch) {
+			return querySearch(object, currentQueryText);
+		}
 
 		// If we have no search text, always allow.
 		if (currentSearchText.empty()) {
 			return true;
 		}
 
-		// If the current search starts with -.- then do special search
-		if (currentSearchText._Starts_with("-.-")) {
-
-			// Remove the first 3 characters (-.-) from the string and turn it into a strea,
-			std::stringstream streamSearch(currentSearchText.substr(3));
-			std::string segment;
-			// Default object found flag to be true
-			bool objFound = true;
-			// Turn the search text into a list of strings split at ")" 
-			// This will cause a string such as value == 50 & id = 6 into [value == 50, id == 6]
-			while (std::getline(streamSearch, segment, '&')) {
-				segment = trim(segment);
-				int spacePos = segment.find(" ");
-				// First word will be the column to operate on
-				std::string column = segment.substr(0, spacePos);
-				// Second "word" will be the operator 
-				int secondSpacePos = segment.find(" ", spacePos + 1);
-				std::string operation = segment.substr(spacePos + 1, secondSpacePos - spacePos - 1);
-				// Third "word" is the value to compare
-				//Second "word" will be the operator 
-				int thirdSpacePos = segment.find(" ", secondSpacePos + 1);
-				std::string valueCompare = segment.substr(secondSpacePos + 1, thirdSpacePos - secondSpacePos);
-				valueCompare = trim(valueCompare);
-				if (column._Starts_with("value")) {
-					objFound = objFound && complexSearch(object->getValue(), operation, (valueCompare));
-				}
-				else if (column._Starts_with("count")) {
-					objFound = objFound && complexSearch(object->getCount(), operation, (valueCompare));
-				}
-				else if (column._Starts_with("id")) {
-					objFound = objFound && complexSearch(object->getObjectID(), operation, valueCompare);
-				}
-				else if (column._Starts_with("name")) {
-					objFound = objFound && complexSearch(object->getName(), operation, valueCompare);
-				}
-				
-			}
-
-			return objFound;
-		}
-		
 		// Allow filtering by object ID.
 		if (settings.object_window.filter_by_id) {
 			if (matchDispatcher(object->getObjectID())) {
 				return true;
 			}
-		}
-
-		// Allow filtering by object ID.
-		
+		}		
 
 		// Allow filtering by object name.
 		if (settings.object_window.filter_by_name) {
@@ -366,6 +378,8 @@ namespace se::cs::dialog::object_window {
 		auto showModifiedButton = GetDlgItem(hDlg, CONTROL_ID_SHOW_MODIFIED_ONLY_BUTTON);
 		auto searchLabel = GetDlgItem(hDlg, CONTROL_ID_FILTER_LABEL);
 		auto searchEdit = GetDlgItem(hDlg, CONTROL_ID_FILTER_EDIT);
+		auto searchQueryEdit = GetDlgItem(hDlg, CONTROL_ID_QUERY_EDIT);
+		auto showQueryButton = GetDlgItem(hDlg, CONTROL_ID_QUERY_BUTTON);
 
 		// Update globals.
 		ghWndTabControl::set(tabControl);
@@ -390,11 +404,15 @@ namespace se::cs::dialog::object_window {
 
 		// Update the search bar placement.
 		int currentY = mainHeight - EDIT_HEIGHT - BASIC_PADDING;
+		int modifyButtonWidth = 160;
+		int queryXOffset = 50;
 		auto searchEditWidth = std::min<int>(mainWidth - BASIC_PADDING * 2, 300);
-		MoveWindow(showModifiedButton, BASIC_PADDING, currentY, 160, EDIT_HEIGHT, TRUE);
+		MoveWindow(showModifiedButton, BASIC_PADDING, currentY, modifyButtonWidth, EDIT_HEIGHT, TRUE);
+		MoveWindow(searchQueryEdit, (BASIC_PADDING + modifyButtonWidth + queryXOffset), currentY, searchEditWidth - 50, EDIT_HEIGHT, FALSE);
+		MoveWindow(showQueryButton, (BASIC_PADDING + modifyButtonWidth + queryXOffset) + searchEditWidth - 50, currentY, 80, EDIT_HEIGHT, TRUE);
 		MoveWindow(searchLabel, mainWidth - BASIC_PADDING - searchEditWidth - 54 - BASIC_PADDING, currentY + STATIC_COMBO_OFFSET, 54, STATIC_HEIGHT, TRUE);
 		MoveWindow(objectWindowSearchControl, mainWidth - BASIC_PADDING - searchEditWidth, currentY, searchEditWidth, EDIT_HEIGHT, FALSE);
-
+		
 		RedrawWindow(hDlg, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 	}
 
@@ -413,8 +431,10 @@ namespace se::cs::dialog::object_window {
 		if (objectWindowSearchControl == NULL) {
 
 			auto hDlgShowModifiedOnly = CreateWindowExA(NULL, WC_BUTTON, "Show modified only", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_CHILD | WS_VISIBLE | WS_GROUP, 0, 0, 0, 0, hWnd, (HMENU)CONTROL_ID_SHOW_MODIFIED_ONLY_BUTTON, hInstance, NULL);
-			auto hDlgFilterStatic = CreateWindowExA(NULL, WC_STATIC, "Filr:", SS_RIGHT | WS_CHILD | WS_VISIBLE | WS_GROUP, 0, 0, 0, 0, hWnd, (HMENU)CONTROL_ID_FILTER_LABEL, hInstance, NULL);
+			auto hDlgFilterStatic = CreateWindowExA(NULL, WC_STATIC, "Filter:", SS_RIGHT | WS_CHILD | WS_VISIBLE | WS_GROUP, 0, 0, 0, 0, hWnd, (HMENU)CONTROL_ID_FILTER_LABEL, hInstance, NULL);
 			hDlgFilterEdit = CreateWindowExA(WS_EX_CLIENTEDGE, WC_EDIT, "", ES_LEFT | ES_AUTOHSCROLL | WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP, 0, 0, 0, 0, hWnd, (HMENU)CONTROL_ID_FILTER_EDIT, hInstance, NULL);
+			auto hDlgShowQuerySearch = CreateWindowExA(NULL, WC_BUTTON, "Enable Query", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_CHILD | WS_VISIBLE | WS_GROUP, 0, 0, 0, 0, hWnd, (HMENU)CONTROL_ID_QUERY_BUTTON, hInstance, NULL);
+			auto hDlgQueryEdit = CreateWindowExA(WS_EX_CLIENTEDGE, WC_EDIT, "", ES_LEFT | ES_AUTOHSCROLL | WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP, 0, 0, 0, 0, hWnd, (HMENU)CONTROL_ID_QUERY_EDIT, hInstance, NULL);
 			if (hDlgFilterEdit) {
 				SetWindowSubclass(hDlgFilterEdit, ui_subclass::edit::BasicExtendedProc, NULL, NULL);
 
@@ -422,6 +442,8 @@ namespace se::cs::dialog::object_window {
 				SendMessageA(hDlgShowModifiedOnly, WM_SETFONT, font, MAKELPARAM(TRUE, FALSE));
 				SendMessageA(hDlgFilterStatic, WM_SETFONT, font, MAKELPARAM(TRUE, FALSE));
 				SendMessageA(hDlgFilterEdit, WM_SETFONT, font, MAKELPARAM(TRUE, FALSE));
+				SendMessageA(hDlgShowQuerySearch, WM_SETFONT, font, MAKELPARAM(TRUE, FALSE));
+				SendMessageA(hDlgQueryEdit, WM_SETFONT, font, MAKELPARAM(TRUE, FALSE));
 			}
 			else {
 				log::stream << "ERROR: Could not create search control!" << std::endl;
@@ -583,12 +605,20 @@ namespace se::cs::dialog::object_window {
 				modeShowModifiedOnly = SendDlgItemMessageA(hWnd, id, BM_GETCHECK, 0, 0);
 				RefreshListView(hWnd);
 				break;
+			case CONTROL_ID_QUERY_BUTTON:
+				modeQuerySearch = SendDlgItemMessageA(hWnd, id, BM_GETCHECK, 0, 0);
+				RefreshListView(hWnd);
+				break;
 			}
 			break;
 		case EN_CHANGE:
 			switch (id) {
 			case CONTROL_ID_FILTER_EDIT:
 				OnFilterEditChanged(hWnd);
+				break;
+			case CONTROL_ID_QUERY_EDIT:
+				auto newQuery = se::cs::winui::GetWindowText(GetDlgItem(hWnd, CONTROL_ID_QUERY_EDIT));
+				currentQueryText = std::move(newQuery);
 				break;
 			}
 			break;
