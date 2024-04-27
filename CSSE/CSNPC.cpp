@@ -12,7 +12,7 @@ namespace se::cs {
 	}
 
 	int NPC::getFight() const {
-		// If provides a training
+		// Return the fight value for the NPC
 		return aiConfig.fight;
 	}
 
@@ -31,6 +31,7 @@ namespace se::cs {
 				[](const std::vector<int>& above, const std::vector<int>& below) {
 					return (above[1] > below[1]);
 				});
+
 			// Construct the skill string, ex: "Alchemy(100), Blunt Weapon(90), Long Blade(60)"
 			std::ostringstream oss;
 			oss << getSkillName(trainingSkills[0][0]) << "(" << trainingSkills[0][1] << "), " << getSkillName(trainingSkills[1][0]) << "(" << trainingSkills[1][1] << "), " << getSkillName(trainingSkills[2][0]) << "(" << trainingSkills[2][1] << ")";
