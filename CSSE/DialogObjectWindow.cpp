@@ -243,6 +243,7 @@ namespace se::cs::dialog::object_window {
 			}
 		}
 
+		
 		// Allow filtering by faction.
 		if (settings.object_window.filter_by_faction && object->objectType == ObjectType::NPC) {
 			const auto asNPC = static_cast<const NPC*>(object);
@@ -257,6 +258,14 @@ namespace se::cs::dialog::object_window {
 				if (matchDispatcher(asNPC->getFactionRankName())) {
 					return true;
 				}
+			}
+		}
+
+		// Allow filtering by training.
+		if (settings.object_window.filter_by_training_skills && object->objectType == ObjectType::NPC) {
+			const auto asNPC = static_cast<const NPC*>(object);
+			if (matchDispatcher(asNPC->getTraining())) {
+				return true;
 			}
 		}
 
