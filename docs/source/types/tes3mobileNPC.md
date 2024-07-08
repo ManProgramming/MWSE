@@ -217,6 +217,9 @@ Direct access to the actor's attack bonus effect attribute.
 
 *Read-only*. Access to a table of 8 [`tes3statistic`](https://mwse.github.io/MWSE/types/tes3statistic/) objects for the actor's attributes. If you are setting player stats, instead use `tes3.setStatistic` to also update the UI immediately.
 
+!!! note
+	This array is 1-indexed. The array indices correspond to the [tes3.attribute](https://mwse.github.io/MWSE/references/attributes/) table plus 1 to account for Lua's 1-based array indexing. In other words `myMobile.attributes[tes3.attribute.strength + 1]` returns the `tes3statistic` object corresponding to strength.
+
 **Returns**:
 
 * `result` ([tes3statistic](../types/tes3statistic.md)[])
@@ -723,7 +726,7 @@ No description yet available.
 ### `hasVampirism`
 <div class="search_terms" style="display: none">hasvampirism, vampirism</div>
 
-*Read-only*. True if the actor has a vampirism effect.
+*Read-only*. True if the actor has a vampirism effect. Checks if the actor has an active vampirism magic effect. This is the same method used in the engine to determine if an NPC has a vampire head model, or can use a vampire dialogue response.
 
 **Returns**:
 
@@ -1708,7 +1711,10 @@ Direct access to the actor's silence effect attribute.
 ### `skills`
 <div class="search_terms" style="display: none">skills</div>
 
-*Read-only*. An array-style table with access to the twenty seven NPC skill statistics ([tes3statisticSkill](https://mwse.github.io/MWSE/types/tes3statisticSkill/)).
+*Read-only*. An array-style table with access to the twenty seven NPC skill statistics.
+
+!!! note
+	This array is 1-indexed. The array indices correspond to the [tes3.skill](https://mwse.github.io/MWSE/references/skills/) table plus 1 to account for Lua's 1-based array indexing. In other words `myMobile.skills[tes3.skill.alchemy + 1]` returns the `tes3statisticSkill` object corresponding to alchemy skill.
 
 **Returns**:
 
@@ -2448,6 +2454,25 @@ Kills the actor by setting its health to 0.
 ```lua
 myObject:kill()
 ```
+
+***
+
+### `overrideHeadTrackingThisFrame`
+<div class="search_terms" style="display: none">overrideheadtrackingthisframe</div>
+
+
+!!! warning
+	This part of the API isn't fully understood yet and thus is considered experimental. That means that there can be breaking changes requiring the code using this part of the API to be rewritten. The MWSE team will not make any effort to keep backward compatibility with the mods using experimental APIs.
+
+ Causes the actor to look towards this reference, while obey the usual head turning constraints. This must be called every frame in the `simulate` event to work. It will override regular head look behaviour and the target may be at any distance in the same worldspace.
+
+```lua
+myObject:overrideHeadTrackingThisFrame(target)
+```
+
+**Parameters**:
+
+* `target` ([tes3reference](../types/tes3reference.md))
 
 ***
 

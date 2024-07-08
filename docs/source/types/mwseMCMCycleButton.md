@@ -264,6 +264,17 @@ Set to the value of `sCancel` GMST.
 
 ***
 
+### `showDefaultSetting`
+<div class="search_terms" style="display: none">showdefaultsetting, defaultsetting</div>
+
+If true, then the `defaultSetting` of this setting's `variable` will be shown below its description.
+
+**Returns**:
+
+* `result` (boolean)
+
+***
+
 ### `sNo`
 <div class="search_terms" style="display: none">sno</div>
 
@@ -489,55 +500,20 @@ myObject:enable()
 
 ***
 
-### `getComponent`
-<div class="search_terms" style="display: none">getcomponent, component</div>
+### `getMouseOverText`
+<div class="search_terms" style="display: none">getmouseovertext, mouseovertext</div>
 
-Creates a new Component of given class or returns the given Component.
+Retrieves the text that this setting should display in any related [`mouseOverInfo`s](./mwseMCMMouseOverInfo.md). This method currently utilized to display this component's description whenever the component is in a [`SideBarPage`](./mwseMCMSideBarPage.md). If this `Setting` has `showDefaultSetting == true`, then this method will also include the current `defaultSetting`.
+
+Primarily intended for internal use.
 
 ```lua
-local component = myObject:getComponent({ class = ..., label = ..., indent = ..., childIndent = ..., paddingBottom = ..., childSpacing = ..., inGameOnly = ..., postCreate = ..., parentComponent = ... })
+local text = myObject:getMouseOverText()
 ```
-
-**Parameters**:
-
-* `componentData` ([mwseMCMComponent](../types/mwseMCMComponent.md), table)
-	* `class` (string): The component type to get. On of the following:
-		- `"Template"`
-		- `"ExclusionsPage"`
-		- `"FilterPage"`
-		- `"MouseOverPage"`
-		- `"Page"`
-		- `"SideBarPage"`
-		- `"Category"`
-		- `"SideBySideBlock"`
-		- `"ActiveInfo"`
-		- `"Hyperlink"`
-		- `"Info"`
-		- `"MouseOverInfo"`
-		- `"Setting"`
-		- `"Button"`
-		- `"OnOffButton"`
-		- `"YesNoButton"`
-		- `"CycleButton"`
-		- `"KeyBinder"`
-		- `"Dropdown"`
-		- `"TextField"`
-		- `"ParagraphField"`
-		- `"Slider"`
-		- `"DecimalSlider"`
-		- `"PercentageSlider"`
-	* `label` (string): *Optional*. The label text to set for the new component. Not all component types have a label.
-	* `indent` (integer): *Default*: `12`. The left padding size in pixels. Only used if the `childIndent` isn't set on the parent component.
-	* `childIndent` (integer): *Optional*. The left padding size in pixels. Used on all the child components.
-	* `paddingBottom` (integer): *Default*: `4`. The bottom border size in pixels. Only used if the `childSpacing` is unset on the parent component.
-	* `childSpacing` (integer): *Optional*. The bottom border size in pixels. Used on all the child components.
-	* `inGameOnly` (boolean): *Default*: `false`.
-	* `postCreate` (fun(self: [mwseMCMComponent](../types/mwseMCMComponent.md))): *Optional*. Can define a custom formatting function to make adjustments to any element saved in `self.elements`.
-	* `parentComponent` ([mwseMCMComponent](../types/mwseMCMComponent.md)): *Optional*.
 
 **Returns**:
 
-* `component` ([mwseMCMComponent](../types/mwseMCMComponent.md))
+* `text` (string, nil): The text to display. Returning `nil` means that the `mouseOverInfo` should display text from a different source. e.g. from the `description` of the relevant [`SideBarPage`](./mwseMCMSideBarPage.md).
 
 ***
 
@@ -588,7 +564,7 @@ myObject:makeComponent(parentBlock)
 Creates a new mwseMCMCycleButton.
 
 ```lua
-local button = myObject:new({ label = ..., description = ..., options = ..., leftSide  = ..., variable = ..., defaultSetting = ..., callback = ..., inGameOnly = ..., restartRequired = ..., restartRequiredMessage = ..., indent = ..., childIndent = ..., paddingBottom = ..., childSpacing = ..., postCreate = ..., class = ..., componentType = ..., parentComponent = ... })
+local button = myObject:new({ label = ..., description = ..., options = ..., leftSide = ..., variable = ..., defaultSetting = ..., callback = ..., inGameOnly = ..., restartRequired = ..., restartRequiredMessage = ..., indent = ..., childIndent = ..., paddingBottom = ..., childSpacing = ..., postCreate = ..., class = ..., componentType = ..., parentComponent = ... })
 ```
 
 **Parameters**:
@@ -597,7 +573,7 @@ local button = myObject:new({ label = ..., description = ..., options = ..., lef
 	* `label` (string): *Optional*. Text shown next to the button.
 	* `description` (string): *Optional*. If in a [Sidebar Page](../types/mwseMCMSideBarPage.md), the description will be shown on mouseover.
 	* `options` ([tes3uiCycleButtonOption](../types/tes3uiCycleButtonOption.md)[]): This table holds the text and variable value for each of the cycle button's options.
-	* `leftSide ` (boolean): *Default*: `true`. If true, the button will be created on the left and label on the right.
+	* `leftSide` (boolean): *Default*: `true`. If true, the button will be created on the left and label on the right.
 	* `variable` ([mwseMCMVariable](../types/mwseMCMVariable.md), [mwseMCMSettingNewVariable](../types/mwseMCMSettingNewVariable.md)): *Optional*. A variable for this cycle button.
 	* `defaultSetting` (unknown): *Optional*. If `defaultSetting` wasn't passed in the `variable` table, can be passed here. The new variable will be initialized to this value.
 	* `callback` (fun(self: [mwseMCMCycleButton](../types/mwseMCMCycleButton.md))): *Optional*. The custom function called when the player interacts with this cycle button.
@@ -616,25 +592,6 @@ local button = myObject:new({ label = ..., description = ..., options = ..., lef
 **Returns**:
 
 * `button` ([mwseMCMCycleButton](../types/mwseMCMCycleButton.md))
-
-***
-
-### `prepareData`
-<div class="search_terms" style="display: none">preparedata</div>
-
-Prepares the provided parameters table and sets the `parentComponent` field to `mwseMCMComponent`.
-
-```lua
-local data = myObject:prepareData(data)
-```
-
-**Parameters**:
-
-* `data` (string, mwseMCMComponent.new.data): *Optional*.
-
-**Returns**:
-
-* `data` (mwseMCMComponent.new.data)
 
 ***
 
