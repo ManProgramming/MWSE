@@ -1,6 +1,9 @@
 #include "CSNPC.h"
 
 #include "CSFaction.h"
+#include "CSDataHandler.h"
+#include "CSRecordHandler.h"
+#include "CSGameSetting.h"
 
 namespace se::cs {
 	const char* NPC::getFactionRankName() const {
@@ -34,7 +37,11 @@ namespace se::cs {
 
 			// Construct the skill string, ex: "Alchemy(100), Blunt Weapon(90), Long Blade(60)"
 			std::ostringstream oss;
-			oss << getSkillName(trainingSkills[0][0]) << "(" << trainingSkills[0][1] << "), " << getSkillName(trainingSkills[1][0]) << "(" << trainingSkills[1][1] << "), " << getSkillName(trainingSkills[2][0]) << "(" << trainingSkills[2][1] << ")";
+			// Grab the skill name from game settings
+			const auto recordHandler = DataHandler::get()->recordHandler;
+			oss << recordHandler->getGameSettingForSkill(trainingSkills[0][0])->value.asString << "(" << trainingSkills[0][1] << "), " 
+				<< recordHandler->getGameSettingForSkill(trainingSkills[1][0])->value.asString << "(" << trainingSkills[1][1] << "), "
+				<< recordHandler->getGameSettingForSkill(trainingSkills[2][0])->value.asString << "(" << trainingSkills[2][1] << ")";
 			std::string textToDisplay = oss.str();
 			return textToDisplay;
 		} 
@@ -42,39 +49,5 @@ namespace se::cs {
 		// Not a trainer
 		return "";
 		
-	}
-
-	const char* NPC::getSkillName(int skillIndex) const {
-		const char* skillNames[27] = {
-			"Block", 
-			"Armorer", 
-			"Medium Armor", 
-			"Heavy Armor",
-			"Blunt Weapon",
-			"Long Blade",
-			"Axe",
-			"Spear",
-			"Athletics",
-			"Enchant",
-			"Destruction",
-			"Alteration",
-			"Illusion",
-			"Conjuration",
-			"Mysticism",
-			"Restoration",
-			"Alchemy",
-			"Unarmored",
-			"Security",
-			"Sneak",
-			"Acrobatics",
-			"Light armor",
-			"Short Blade",
-			"Marksman",
-			"Mercantile",
-			"Speechcraft",
-			"Hand-to-hand"
-		};
-		
-		return skillNames[skillIndex];
 	}
 }
