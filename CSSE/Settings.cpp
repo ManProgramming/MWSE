@@ -236,17 +236,6 @@ namespace se::cs {
 
 				// Search settings
 				{ "clear_filter_on_tab_switch", clear_filter_on_tab_switch },
-<<<<<<< HEAD
-				{ "filter_by_id", filter_by_id },
-				{ "filter_by_name", filter_by_name },
-				{ "filter_by_icon_path", filter_by_icon_path },
-				{ "filter_by_model_path", filter_by_model_path },
-				{ "filter_by_enchantment_id", filter_by_enchantment_id },
-				{ "filter_by_script_id", filter_by_script_id },
-				{ "filter_by_book_text", filter_by_book_text },
-				{ "filter_by_faction", filter_by_faction },
-				{ "filter_by_training_skills", filter_by_training_skills },
-=======
 				{ "filter_by_id", search_settings.id },
 				{ "filter_by_name", search_settings.name },
 				{ "filter_by_icon_path", search_settings.icon_path },
@@ -256,7 +245,7 @@ namespace se::cs {
 				{ "filter_by_book_text", search_settings.book_text },
 				{ "filter_by_faction", search_settings.faction },
 				{ "filter_by_effect", search_settings.effect },
->>>>>>> 958270badf37f0a3abd5638de18494843920fbfb
+				{ "filter_by_training_skills", search_settings.training },
 				{ "highlight_modified_items", highlight_modified_items },
 				{ "case_sensitive", search_settings.case_sensitive },
 				{ "use_regex", search_settings.use_regex },
