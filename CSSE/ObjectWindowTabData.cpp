@@ -132,10 +132,6 @@ namespace se::cs::dialog::object_window {
 		sprintf_s(displayInfo->item.pszText, displayInfo->item.cchTextMax, "%s", string);
 	}
 
-	void TabColumn::display(LPNMLVDISPINFOA displayInfo, std::string string) const {
-		sprintf_s(displayInfo->item.pszText, displayInfo->item.cchTextMax, "%s", string.c_str());
-	}
-
 	void TabColumn::display(LPNMLVDISPINFOA displayInfo, const NI::IteratedList<ItemStack*>& items) const {
 		if (items.empty()) {
 			display(displayInfo, "-NONE-");

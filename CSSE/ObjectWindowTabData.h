@@ -62,7 +62,6 @@ namespace se::cs::dialog::object_window {
 		void display(LPNMLVDISPINFOA displayInfo, int value) const;
 		void display(LPNMLVDISPINFOA displayInfo, float value, const char* format = "%.2f") const;
 		void display(LPNMLVDISPINFOA displayInfo, const char* string) const;
-		void display(LPNMLVDISPINFOA displayInfo, std::string string) const;
 		void display(LPNMLVDISPINFOA displayInfo, const NI::IteratedList<ItemStack*>& items) const;
 		void display(LPNMLVDISPINFOA displayInfo, const NI::IteratedList<LeveledList::Node*>* list) const;
 
